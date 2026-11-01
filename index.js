@@ -17,7 +17,6 @@ wss.on('connection', (ws) => {
     console.log('Player conectado. Total:', clients.size);
 
     ws.on('message', (message) => {
-        // Recebe heartbeat ou mensagens do player (ignora)
         const msg = message.toString();
         if (msg === 'ping') return; 
     });
@@ -28,14 +27,29 @@ wss.on('connection', (ws) => {
     });
 });
 
-// API que o SITE vai chamar quando você clicar em um botão
+// API que o SITE vai chamar para mandar comandos
 app.post('/comando', (req, res) => {
-    const { comando, alvo, texto } = req.body;
-    const payload = JSON.stringify({ comando, alvo, texto });
+    const { comando, alvo, texto, duracao } = req.body;
+    const payload = JSON.stringify({ comando, alvo, texto, duracao });
 
     let enviados = 0;
     clients.forEach((client) => {
-        if (client.readyState === 1) { // 1 = OPEN
+        if (client.readyState === 1) { 
+            client.send(payload);
+            enviados++;
+        }
+    });
+
+    res.json({ ok: true, enviados });
+});
+
+// API que o SITE vai chamar para pedir o registro dos players
+app.post('/registrar-player', (req, res) => {
+    const payload = JSON.stringify({ comando: "registrar", alvo: "all", texto: "" });
+
+    let enviados = 0;
+    clients.forEach((client) => {
+        if (client.readyState === 1) { 
             client.send(payload);
             enviados++;
         }
